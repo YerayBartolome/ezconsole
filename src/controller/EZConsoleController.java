@@ -1,66 +1,47 @@
 package controller;
 
 import java.awt.Color;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.Font;
 
 import model.BufferCell;
 import model.EZConsoleModel;
-import view.EZConsoleView;
 
-public class EZConsoleController implements ActionListener {
+public class EZConsoleController {
 	
 	private EZConsoleModel model;
-	private EZConsoleView view;
 	
-	public EZConsoleController (EZConsoleModel model, EZConsoleView view) {
+	public EZConsoleController (EZConsoleModel model) {
 		this.model = model;
-		this.view = view;
-		this.updateViewParams();
-		this.setShellVisible(true);
-		this.model.setCursorX(-1);
-		this.model.setCursorY(0);
-		this.print(' ');
+		this.model.setFont(this.model.getCurrentFont());
 	}
-
-	@Override
-	public void actionPerformed(ActionEvent e) {
-		// TODO Auto-generated method stub
+	
+	public void write(String string) {
+		for (char c : string.toCharArray()) {
+			this.model.writeBufferContent(new BufferCell(c));
+		}
 		
 	}
 	
-	public void updateViewParams() {
-		view.setShellSize(model.getShellSizeX(), model.getShellSizeY());
-		view.setBufferSize(model.getBufferSizeX(), model.getBufferSizeY());
-		view.setShellTitle(model.getShellTitle());
+	/* Getters and Setters */
+	
+	public EZConsoleModel getModel() {
+		return this.model;
 	}
 	
-	public void setShellVisible(boolean visible) {
-		view.setShellVisible(visible);
+	public void setModel(EZConsoleModel model) {
+		this.model = model;
 	}
 	
-	public void print(Object o) {
-		String s = o.toString();
-		view.updateViewCursor(model.getCursorX(), model.getCursorY());
-		for (char c : s.toCharArray()) {
-			BufferCell bc = new BufferCell(c);
-			model.addBufferContents(bc);		
-		}
-		view.updateViewContent(model.getBufferContents(), model.getBufferSizeX(), model.getBufferSizeY());
-		view.repaint();	
-	}
-	
-	public void println(Object o) {
-		this.print(o);
-		this.print('\n');
-	}
-
 	public void setBackgroundColor(Color c) {
 		model.setCurrentBackgroundColor(c);
 	}
 	
 	public void setContentsColor(Color c) {
 		model.setCurrentContentsColor(c);
+	}
+	
+	public void setFont(Font f) {
+		model.setCurrentFont(f);
 	}
 
 }

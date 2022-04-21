@@ -13,6 +13,7 @@ public class EZConsole {
 	private static final String DEFAULTTITLE = "EZConsole for Java17 by Yeray Bartolomé";
 	
 	private EZConsoleController controller;
+	private EZConsoleView view;
 	
 	public EZConsole () {
 		this(DEFAULTSIZE_X, DEFAULTSIZE_Y, DEFAULTTITLE);
@@ -28,17 +29,17 @@ public class EZConsole {
 	
 	public EZConsole (int x, int y, String title) {
 		EZConsoleModel model = new EZConsoleModel(x, y, title);
-		EZConsoleView view = new EZConsoleView();
-		this.controller = new EZConsoleController(model, view);
+		this.controller = new EZConsoleController(model);
+		this.view = new EZConsoleView(controller);
 		System.out.println("Launching " + this.DEFAULTTITLE + " in a new Window...");
 	}
 	
 	public void print(Object o) {
-		controller.print(o);
+		view.print(o);
 	}
 	
 	public void println(Object o) {
-		controller.println(o);
+		view.println(o);
 	}
 	
 	public void setBackgroundColor(Color c) {
