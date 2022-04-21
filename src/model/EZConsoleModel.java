@@ -1,246 +1,129 @@
 package model;
 
 import java.awt.Color;
-import java.awt.Dimension;
 import java.awt.Font;
-import java.awt.font.FontRenderContext;
-import java.awt.geom.Rectangle2D;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
-import javax.swing.JComponent;
+/**
+ * Class used for storing console data
+ * 
+ * * Original Author: 
+ * @author Mike
+ * 
+ * Modified by:
+ * @author Yeray Bartolomé
+ * 
+ * New Features:
+ * 	- This former ConsoleData acts now as the model layer
+ *    of the MVC programming architecture.
+ *  - A new BufferCell data structure class to encapsulate
+ *    each cell properties and contents.
+ */
+public class EZConsoleModel {
+	private int capacity = 0;
+	public int rows;
+	public int columns;
+	public BufferCell[] bufferContents;
 
-import view.EZConsoleView;
+	public EZConsoleModel() {
+		// create empty console data
+	}
 
-public class EZConsoleModel extends JComponent {
-	private static final long serialVersionUID = 1L;
-	
-	/* Console settings params */
-	
-	//Shell dimensions
-	private int shellSizeX;
-	private int shellSizeY;
-	
-	//Content 2D buffer dimensions
-	private int bufferSizeX;
-	private int bufferSizeY;
-	
-	//Content visual settings
-	private String shellTitle;
-	private Color currentContentsColor = Color.WHITE;
-	private Color currentBackgroundColor = Color.BLACK;
-	private Font currentFont = new Font("Monospace", Font.PLAIN, 14);
-	
-	private int fontSizeX;
-	private int fontSizeY;
-	private int fontYOffset;
-	
-	private int tabXOffset = 5;
-	
-	/* Console content manipulation */
-	
-	//Actual stored data
-	private BufferCell[][] bufferContents;
-	
-	//Data writing position
-	private int cursorX = 0;
-	private int cursorY = 0;
-	
-	/* Model constructor */
-	public EZConsoleModel (int x, int y, String title) {
+	private void ensureCapacity(int minCapacity) {
+		if (this.capacity >= minCapacity)
+			return;
+
+		BufferCell[] newContents = new BufferCell[minCapacity];
+
+		int size = rows * columns;
+		if (size > 0) {
+			System.arraycopy(this.bufferContents, size, newContents, 0, size);
+		}
+
+		this.bufferContents = newContents;
+		capacity = minCapacity;
+	}
+
+	public void init(int columns, int rows) {
+		ensureCapacity(rows * columns);
+		this.rows = rows;
+		this.columns = columns;
+	}
+
+	/**
+	 * Sets a single character position
+	 */
+	public void setContentsAt(int column, int row, BufferCell newContent) {
+		int pos = column + row * columns;
 		
-		//initialization of settings
-		this.shellSizeX = x;
-		this.shellSizeY = y;
-		
-		this.bufferSizeX = x;
-		this.bufferSizeY = y;
-		
-		this.bufferContents = new BufferCell[x][y];
-		
-		for(int i = 0; i < bufferSizeX; i++) {
-			for(int j = 0; j < bufferSizeY; j++) {
-				BufferCell bc = new BufferCell(' ');
-				this.innitBufferCell(bc);
-				this.writeBufferContentAt(i, j, bc);
+		this.bufferContents[pos] = newContent;
+	}
+	
+	public void pushUp (BufferCell properties) {
+		int pos; 
+		// agafem les files des de la 1 (la segona pq numerem a partir de 0)
+		// fins a la darrera i movem el contingut a fila-1 (pujar cap amunt)
+		for (int row=1; row<rows; row++) {
+			for (int col=0; col<columns; col++) {
+				pos = col + row * columns;
+				setContentsAt(col,row-1, this.bufferContents[pos]);
 			}
 		}
-		
-		this.setPreferredSize(new Dimension(this.bufferSizeX * this.fontSizeX, this.bufferSizeY * this.fontSizeY));
-	}
-	
-	
-	/* Model manipulation functions */
-	
-	//Writes a single BufferCell
-	public void writeBufferContent(BufferCell bc) {
-		this.writeBufferContentAt(this.cursorX, this.cursorY, bc);
-		this.updateCursor(bc);
-	}
-	
-	//Writes a specific BufferCell position
-	public void writeBufferContentAt(int x, int y, BufferCell bc) {
-		this.innitBufferCell(bc);
-		this.bufferContents[x][y] = bc;
-	}
-	
-	private void updateCursor(BufferCell bc) {
-		char c = bc.getContent();
-		switch (c) {
-		case '\n':
-			this.cursorX = 0;
-			this.cursorY++;
-			break;
-		case '\t':
-			this.cursorX+=this.tabXOffset;
-			break;
-		default:
-			this.cursorX++;
-			break;
+		// i ara només ens queda de fer neteja de la darrera fila 
+		for (int col=0; col<columns; col++) {
+			System.out.print(properties.toString());
+			setContentsAt(col, rows-1, properties);
 		}
-		if (this.cursorX >= this.bufferSizeX) {
-			this.cursorX = 0;
-			this.cursorY++;
-		}
-		
-		if (this.cursorY >= this.bufferSizeY) {
-			this.pushBufferUP();
-		}
-		this.repaint();
 	}
 	
-	private void pushBufferUP() {
-		for (int i = 0; i < this.bufferSizeX; i++) {
-			for (int j = 1; j < this.bufferSizeY; j++) {
-				this.writeBufferContentAt(i, j-1, this.bufferContents[i][j]);
+	public char[] bufferContentsToCharArray() {
+		char[] contents = new char[this.capacity];
+		for (int i = 0; i < this.capacity; i++) {
+			contents[i] = this.bufferContents[i].getContent();
+		}
+		return contents;
+	}
+
+	public BufferCell getBCAt(int column, int row) {
+		int offset = column + row * columns;
+		return this.getBCAt(offset);
+	}
+	
+	public BufferCell getBCAt(int offset) {
+		return this.bufferContents[offset];
+	}
+
+	public Color getContentColorAt(int column, int row) {
+		int offset = column + row * columns;
+		return this.getContentColorAt(offset);
+	}
+	
+	public Color getContentColorAt(int offset) {
+		return this.bufferContents[offset].getContentColor();
+	}
+
+	public Color getBackgroundAt(int column, int row) {
+		int offset = column + row * columns;
+		return this.getBackgroundAt(offset);
+	}
+	public Color getBackgroundAt(int offset) {
+		return this.bufferContents[offset].getBackgroundColor();
+	}
+
+	public Font getFontAt(int column, int row) {
+		int offset = column + row * columns;
+		return this.getFontAt(offset);
+	}
+	
+	public Font getFontAt(int offset) {
+		return this.bufferContents[offset].getFont();
+	}
+
+	public void fillArea(BufferCell bc, int column,	int row, int width, int height) {
+		for (int q = Math.max(0, row); q < Math.min(row + height, rows); q++) {
+			for (int p = Math.max(0, column); p < Math.min(column + width, columns); p++) {
+				int offset = p + q * columns;
+				this.bufferContents[offset] = bc;
 			}
 		}
-		
-		for (int i = 0; i < this.bufferSizeX; i++) {
-			BufferCell bc = new BufferCell(' ');
-			this.innitBufferCell(bc);
-			this.writeBufferContentAt(i, this.getBufferSizeY()-1, bc);
-		}
 	}
-
-
-	private void innitBufferCell(BufferCell bufferCell) {
-		bufferCell.setContentColor(this.currentContentsColor);
-		bufferCell.setBackgroundColor(this.currentBackgroundColor);
-		bufferCell.setFont(this.currentFont);
-	}
-	
-	/* Getters and Setters */
-	
-	public Color getCurrentContentsColor() {
-		return currentContentsColor;
-	}
-
-	public void setCurrentContentsColor(Color currentContentsColor) {
-		this.currentContentsColor = currentContentsColor;
-	}
-
-	public Color getCurrentBackgroundColor() {
-		return currentBackgroundColor;
-	}
-
-	public void setCurrentBackgroundColor(Color currentBackgroundColor) {
-		this.currentBackgroundColor = currentBackgroundColor;
-	}
-	
-	public int getShellSizeX() {
-		return shellSizeX;
-	}
-	public void setShellSizeX(int shellSizeX) {
-		this.shellSizeX = shellSizeX;
-	}
-	public int getShellSizeY() {
-		return shellSizeY;
-	}
-	public void setShellSizeY(int shellSizeY) {
-		this.shellSizeY = shellSizeY;
-	}
-	public int getBufferSizeX() {
-		return bufferSizeX;
-	}
-	public void setBufferSizeX(int bufferSizeX) {
-		this.bufferSizeX = bufferSizeX;
-	}
-	public int getBufferSizeY() {
-		return bufferSizeY;
-	}
-	public void setBufferSizeY(int bufferSizeY) {
-		this.bufferSizeY = bufferSizeY;
-	}
-
-	public String getShellTitle() {
-		return shellTitle;
-	}
-
-	public void setShellTitle(String shellTitle) {
-		this.shellTitle = shellTitle;
-	}
-
-	public Font getCurrentFont() {
-		return currentFont;
-	}
-
-	public void setCurrentFont(Font currentFont) {
-		this.currentFont = currentFont;
-
-		FontRenderContext frc = new FontRenderContext(currentFont.getTransform(), false, false);
-		Rectangle2D contentBounds = currentFont.getStringBounds("X", frc);
-		fontSizeX = (int) contentBounds.getWidth();
-		fontSizeY = (int) contentBounds.getHeight();
-		fontYOffset = -(int) contentBounds.getMinY();
-		
-		this.setPreferredSize(new Dimension(this.bufferSizeX * fontSizeX, this.bufferSizeY * fontSizeY));
-
-		repaint();
-	}
-
-	public int getCursorX() {
-		return cursorX;
-	}
-
-	public void setCursorX(int cursorX) {
-		this.cursorX = cursorX;
-	}
-
-	public int getCursorY() {
-		return cursorY;
-	}
-
-	public void setCursorY(int cursorY) {
-		this.cursorY = cursorY;
-	}
-	
-	public BufferCell[][] getBufferContents() {
-		return this.bufferContents;
-	}
-
-	public int getFontWidth() {
-		return fontSizeX;
-	}
-
-	public void setFontWidth(int fontWidth) {
-		this.fontSizeX = fontWidth;
-	}
-
-	public int getFontHeight() {
-		return fontSizeY;
-	}
-
-	public void setFontHeight(int fontHeight) {
-		this.fontSizeY = fontHeight;
-	}
-
-	public int getFontYOffset() {
-		return fontYOffset;
-	}
-
-	public void setFontYOffset(int fontYOffset) {
-		this.fontYOffset = fontYOffset;
-	}
-	
 }

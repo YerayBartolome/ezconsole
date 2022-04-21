@@ -1,22 +1,18 @@
 package main;
 
 import java.awt.Color;
-
-import controller.EZConsoleController;
-import model.EZConsoleModel;
 import view.EZConsoleView;
 
 public class EZConsole {
 	
-	private static final int DEFAULTSIZE_X = 800;
-	private static final int DEFAULTSIZE_Y = 400;
-	private static final String DEFAULTTITLE = "EZConsole for Java17 by Yeray Bartolomé";
+	private static final int DEFAULTSIZE_X = 120;
+	private static final int DEFAULTSIZE_Y = 30;
+	private static final String DEFAULT_TITLE = "EZConsole for Java17 by Yeray Bartolomé";
 	
-	private EZConsoleController controller;
 	private EZConsoleView view;
 	
 	public EZConsole () {
-		this(DEFAULTSIZE_X, DEFAULTSIZE_Y, DEFAULTTITLE);
+		this(DEFAULTSIZE_X, DEFAULTSIZE_Y, DEFAULT_TITLE);
 	}
 	
 	public EZConsole (String title) {
@@ -24,18 +20,20 @@ public class EZConsole {
 	}
 	
 	public EZConsole (int x, int y) {
-		this(x, y, DEFAULTTITLE);
+		this(x, y, DEFAULT_TITLE);
 	}
 	
 	public EZConsole (int x, int y, String title) {
-		EZConsoleModel model = new EZConsoleModel(x, y, title);
-		this.controller = new EZConsoleController(model);
-		this.view = new EZConsoleView(controller);
-		System.out.println("Launching " + this.DEFAULTTITLE + " in a new Window...");
+		this.view = new EZConsoleView(x, y, title);
+		System.out.println("Launching " + title + " in a new Window...");
 	}
 	
 	public void print(Object o) {
 		view.print(o);
+	}
+	
+	public void println() {
+		this.println(' ');
 	}
 	
 	public void println(Object o) {
@@ -43,11 +41,11 @@ public class EZConsole {
 	}
 	
 	public void setBackgroundColor(Color c) {
-		controller.setBackgroundColor(c);
+		view.setBackgroundColor(c);
 	}
 	
 	public void setContentsColor(Color c) {
-		controller.setContentsColor(c);
+		view.setContentsColor(c);
 	}
 	
 }

@@ -14,6 +14,17 @@ public class BufferCell {
 		this.content = content;
 	}
 	
+	public BufferCell(char content, Color backgroundColor, Color contentColor, Font font) {
+		this.content = content;
+		this.innit(backgroundColor, contentColor, font);
+	}
+	
+	public void innit(Color backgroundColor, Color contentColor, Font font) {
+		this.backgroundColor = backgroundColor;
+		this.contentColor = contentColor;
+		this.font = font;
+	}
+	
 	public char getContent() {
 		return content;
 	}
@@ -39,5 +50,8 @@ public class BufferCell {
 		this.contentColor = contentColor;
 	}
 	
+	public String toString() {
+		return "BufferCell { char: "+this.content+", bC: "+this.backgroundColor+" cC: "+this.contentColor+" }";
+	}
 	
 }
