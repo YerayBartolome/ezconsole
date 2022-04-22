@@ -21,17 +21,13 @@ public class EZConsoleController extends JComponent {
 	public static final Color DEFAULT_FOREGROUND = Color.LIGHT_GRAY;
 	public static final Color DEFAULT_BACKGROUND = Color.BLACK;
 	private static final Font DEFAULT_FONT = new Font("Monospace", Font.PLAIN, 20);
-	private static final int TAB_SPACES = 5; // Quants espais en un tabulador?
+	private static final int TAB_SPACES = 5;
  
 	private EZConsoleModel model = new EZConsoleModel();
 
 	private int fontWidth;
 	private int fontHeight;
 	private int fontYOffset;
-
-	private boolean cursorVisible = false;
-	private boolean cursorBlinkOn = false; // ho paso a false perquè potser dona pel sac.
-	private boolean cursorInverted = false; // idem. Però sembla que el problema no es aquí
 
 	private int cursorX = 0;
 	private int cursorY = 0;
@@ -70,10 +66,6 @@ public class EZConsoleController extends JComponent {
 		currentFont = f;
 	}
 
-	public void setCursorVisible(boolean visible) {
-		cursorVisible = visible;
-	}
-
 	public int getRows() {
 		return model.rows;
 	}
@@ -94,15 +86,9 @@ public class EZConsoleController extends JComponent {
 		return fontHeight;
 	}
 
-	/**
-	 * Fires a repaint event on a specified rectangle of characters in the
-	 * console
-	 */
 	public void repaintArea(int column, int row, int width, int height) {
 		
-		// sembla que el tema està aquí. repinta i fa el cursor... Així que no el deixo...
-		if (column==this.cursorX && row==this.cursorY && width==1 && height==1 && this.cursorVisible==false) {
-			// System.out.println("repainting cursor area");
+		if (column==this.cursorX && row==this.cursorY && width==1 && height==1) {
 			return;
 		}
 		
@@ -111,9 +97,6 @@ public class EZConsoleController extends JComponent {
 		repaint(column * fw, row * fh, width * fw, height * fh);
 	}
 
-	/**
-	 * Initialises the console to a specified size
-	 */
 	protected void init(int columns, int rows) {
 		model.init(columns, rows);
 		BufferCell bc = new BufferCell(' ', DEFAULT_BACKGROUND, DEFAULT_FOREGROUND, DEFAULT_FONT);
@@ -153,60 +136,40 @@ public class EZConsoleController extends JComponent {
 		Graphics2D g = (Graphics2D) graphics;
 		Rectangle r = g.getClipBounds();
 
-		// calculate x and y range to redraw
 		int x1 = (int) (r.getMinX() / fontWidth);
 		int x2 = (int) (r.getMaxX() / fontWidth) + 1;
-		int y1 = (int) (r.getMinY() / fontWidth);		// potser fontHeight ??
-		int y2 = (int) (r.getMaxY() / fontWidth) + 1;   // potser fontHeight ??
+		int y1 = (int) (r.getMinY() / fontWidth);
+		int y2 = (int) (r.getMaxY() / fontWidth) + 1;
 
 		int curX = getCursorX();
 		int curY = getCursorY();
 
-		for (int j = Math.max(0, y1); j < Math.min(y2, model.rows); j++) { // iterar per les files
+		for (int j = Math.max(0, y1); j < Math.min(y2, model.rows); j++) {
 			int offset = j * model.columns;
 			int start = Math.max(x1, 0);
 			int end = Math.min(x2, model.columns);
 
-			while (start < end) {// iterar per les columnes
+			while (start < end) {
 				
 				Color nfg = model.getContentColorAt(offset+start);
 				Color nbg = model.getBackgroundAt(offset+start);
 				Font nf = model.getFontAt(offset+start);
 
-				// index of ending position
 				int i = start + 1;
-
-				if ((j == curY) && (start == curX)) { // processar posició del cursor
-					if (cursorVisible && cursorBlinkOn && cursorInverted) {
-						// swap foreground and background colours
-						
-						// El cursor fet com a inversió "background-foreground"
-						//System.out.println("Generant cursor per inversió");
-						Color t = nfg;
-						nfg = nbg;
-						nbg = t;
-					}
-				} else {
-					// detect run
-					
-					// "moure i mentre no hi hagi canvis"
-					while ((i < end) && (!((j == curY) && (i == curX)))
-							&& (nfg == model.getContentColorAt(offset+i))
-							&& (nbg == model.getBackgroundAt(offset+i))
-							&& (nf == model.getFontAt(offset+i))) {
-						i++;
-					}
+				
+				while ((i < end) && (!((j == curY) && (i == curX)))
+						&& (nfg == model.getContentColorAt(offset+i))
+						&& (nbg == model.getBackgroundAt(offset+i))
+						&& (nf == model.getFontAt(offset+i))) {
+					i++;
 				}
 
-				// set font
 				g.setFont(nf);
 
-				// draw background
 				g.setBackground(nbg);
 				g.clearRect(fontWidth * start, j * fontHeight, fontWidth
 						* (i - start), fontHeight);
 
-				// draw chars up to this point
 				g.setColor(nfg);
 				for (int k=start; k<i; k++) {
 					g.drawChars(model.bufferContentsToCharArray(), offset + k, 1, 
