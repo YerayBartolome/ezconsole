@@ -2,6 +2,8 @@ package main;
 
 import java.awt.Color;
 
+import functionalities.EZConsole;
+
 public class AppLauncher {
 
 	public static void main(String[] args) {

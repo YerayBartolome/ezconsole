@@ -1,4 +1,4 @@
-package main;
+package functionalities;
 
 import java.awt.Color;
 import view.EZConsoleView;
