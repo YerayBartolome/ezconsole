@@ -17,7 +17,7 @@ public class EZConsole {
 	
 	private static final int DEFAULTSIZE_X = 120;
 	private static final int DEFAULTSIZE_Y = 30;
-	private static final String DEFAULT_TITLE = "EZConsole for Java17 by Y. Bartolom�";
+	private static final String DEFAULT_TITLE = "EZConsole for Java17 by Y. Bartolomé";
 	
 	private volatile EZConsoleView view;
 	private volatile EZConsoleController controller;
@@ -26,22 +26,22 @@ public class EZConsole {
 	
 	/* CONSOLE INSTANCES CREATION */
 	
-	//Creates the console by default
+	//Creates the console by default.
 	public EZConsole () {
 		this(DEFAULTSIZE_X, DEFAULTSIZE_Y, DEFAULT_TITLE);
 	}
 	
-	//Creates the console provided its title
+	//Creates the console provided its title.
 	public EZConsole (String title) {
 		this(DEFAULTSIZE_X, DEFAULTSIZE_Y, title);
 	}
 	
-	//Creates the console provided its with and length
+	//Creates the console provided its with and length.
 	public EZConsole (int x, int y) {
 		this(x, y, DEFAULT_TITLE);
 	}
 	
-	//Creates the console provided all three values
+	//Creates the console provided all three values.
 	public EZConsole (int x, int y, String title) {
 		this.controller = new EZConsoleController(x, y);
 		this.view = new EZConsoleView(x, y, title, controller);
@@ -50,21 +50,21 @@ public class EZConsole {
 	
 	/* CONSOLE SETTINGS */
 	
-	//Sets the visibility of the cursor
+	//Sets the visibility of the cursor.
 	public void setCursorVisible(boolean visible) {
 		try {mutex.acquire();} catch (Exception ex) {}
 		this.view.setCursorVisible(visible);
 		mutex.release();
 	}
 	
-	//Allows to set the cursor in a position within bounds
+	//Allows to set the cursor in a position within bounds.
 	public void setCursorPosition (int w, int h) {
 		try {mutex.acquire();} catch (Exception ex) {}
 		this.view.setCursorPosition(w, h);
 		mutex.release();
 	}
 	
-	//Shows or hides the prompt when reading input-
+	//Shows or hides the prompt when reading input.
 	public void showPrompt(boolean show) {
 		try {mutex.acquire();} catch (Exception ex) {}
 		this.controller.setShowPrompt(show);
@@ -78,38 +78,38 @@ public class EZConsole {
 		mutex.release();
 	}
 	
-	//Sets the cell background color
+	//Sets the console cells background color.
 	public void setBackgroundColor(Color c) {
 		try {mutex.acquire();} catch (Exception ex) {}
 		view.setBackgroundColor(c);
 		mutex.release();
 	}
 	
-	//Sets the cell character color
+	//Sets the cell character color.
 	public void setContentsColor(Color c) {
 		try {mutex.acquire();} catch (Exception ex) {}
 		view.setContentsColor(c);
 		mutex.release();
 	}
 	
-	//Resets the color settings to default
+	//Resets the color settings to default.
 	public void resetColor () {
 		try {mutex.acquire();} catch (Exception ex) {}
 		view.resetColor();
 		mutex.release();
 	}
 	
-	//Returns the cell height
+	//Returns the cell height.
 	public int getRows() {
 		return view.getRows();
 	}
 	
-	//Returns the cell width	
+	//Returns the cell width.	
 	public int getColumns() {
 		return this.getColumns();
 	}
 	
-	/* PROMPTING */
+	/* DISPLAYING CONTENT */
 	
 	//Prints the .toString() of the provided object in the console.
 	public void print(Object o) {
@@ -137,10 +137,35 @@ public class EZConsole {
 		mutex.release();
 	}
 	
+	//Prints in a specified content color without changing settings, then a new line "\n".
 	public void println(Object o, Color c) {
 		this.print(o, c);
 		this.println();
 	}
+	
+	//Prints a table provided a 2D array of objects and the horizontal length.
+	public void printTable(Object[][] o, int[] cellLength) {
+		try {mutex.acquire();} catch (Exception ex) {}
+		view.println();
+		view.printHorizontalDivisor(0, o[0].length, cellLength);
+		view.println();
+		for(int i = 0; i < o.length; i++) {
+			view.print('│');
+			for (int j = 0; j < o[0].length; j++) {
+				view.print(o[i][j]);
+				for(int k = 0; k < cellLength[i]-o[i][j].toString().length(); k++) view.print(' '); 
+				view.print('│');
+			}
+			view.println();
+			view.printHorizontalDivisor(1, o[0].length, cellLength);
+			view.println();
+		}
+		view.println();
+		view.printHorizontalDivisor(2, o[0].length, cellLength);
+		mutex.release();
+	}
+	
+	
 	
 	//Cleanses all the content prompted and returns cursor to [0,0].
 	public void clear() {

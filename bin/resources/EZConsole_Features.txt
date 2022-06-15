@@ -1,0 +1,32 @@
+Creates the console with default settings.
+Creates the console provided its title by String.
+Creates the console provided its with and length.
+Creates the console provided its with, length and title.
+Sets the visibility of the cursor.
+Allows to set the cursor in a position within bounds.
+Shows or hides the prompt when reading input.
+Allows to set a custom prompt.
+Sets the console background color for future prints.
+Sets the console contents color for future prints.
+Resets the color settings to default.
+Returns the shell height.
+Returns the shell width.
+Prints the .toString() of the provided object in the console.
+Prints in a specified content color without changing the overall settings.
+Prints a empty line on the console, then a new line.
+Prints the .toString() of the provided object in the console, then a new line.
+Prints in a specified content color without changing settings, then a new line.
+Prints a table provided a 2D array of objects and the horizontal length.
+Cleanses all the content prompted and returns cursor to [0,0].
+Checks if there is any key tap in the input buffer.
+Resets the current key input buffer.
+Reads a single key pressed by the user (blocks execution until input).
+Same as readKey(), but (hide == true) won't show the input character.
+Reads a single character.
+Reads a string of characters until the user presses [Return].
+Reads an integer value until [Return] is pressed.
+Reads a short integer value until [Return] is pressed.
+Reads a long integer value until [Return] is pressed.
+Reads a double value until [Return] is pressed.
+Reads a float value until [Return] is pressed.
+Reads a byte value until [Return] is pressed.
