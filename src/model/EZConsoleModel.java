@@ -70,7 +70,6 @@ public class EZConsoleModel {
 		}
 		// i ara només ens queda de fer neteja de la darrera fila 
 		for (int col=0; col<columns; col++) {
-			System.out.print(properties.toString());
 			setContentsAt(col, rows-1, properties);
 		}
 	}

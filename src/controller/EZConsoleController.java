@@ -63,6 +63,8 @@ public class EZConsoleController implements HierarchyListener, KeyListener, Acti
 		setMainFont(DEFAULT_FONT);
 		setFont(mainFont);
 		setCursorFlicker(DEFAULT_FLICKER_ON);
+		setBackground(DEFAULT_BACKGROUND);
+		setForeground(DEFAULT_FOREGROUND);
 		prompt = DEFAULT_PROMPT;
 		inputBuffer = new ConcurrentLinkedQueue<Character>();
 		innerBuffer = new ConcurrentLinkedQueue<KeyEvent>();
@@ -136,7 +138,15 @@ public class EZConsoleController implements HierarchyListener, KeyListener, Acti
 	}
 
 	public void clear() {
-		clearArea(0, 0, model.columns, model.rows);
+		innerBuffer.clear();
+		this.clearScreen();
+		for (int i = 0; i < model.rows; i++) {
+			for (int j = 0; j < model.columns; j++) {
+				write(" ");
+			}
+			writeln("");
+		}
+		resetCursor();
 	}
 
 	public void resetCursor() {
@@ -147,7 +157,7 @@ public class EZConsoleController implements HierarchyListener, KeyListener, Acti
 	}
 
 	public void clearScreen() {
-		clear();
+		clearArea(0, 0, model.columns, model.rows);
 		resetCursor();
 	}
 
@@ -403,7 +413,6 @@ public class EZConsoleController implements HierarchyListener, KeyListener, Acti
 		JOptionPane.showMessageDialog(render, 
                 "EZConsole v1.0 by Y. Bartolomé (2021-2022) \n Contains code from JConsole v1.0c by E. Sesa (2016-17) and Swing Console by M. Anderson found at https://github.com/mikera/swing-console",
                 "About & Credits", JOptionPane.INFORMATION_MESSAGE);
-		
 	}
 
 	@Override
