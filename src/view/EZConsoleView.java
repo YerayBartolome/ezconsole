@@ -36,6 +36,13 @@ public class EZConsoleView extends JFrame {
 		console.write(o.toString());
 	}
 	
+	public void print(Object o, Color color) {
+		Color fgc = console.getForeground();
+		console.setForeground(color);
+		print(o);
+		console.setForeground(fgc);
+	}
+	
 	public void println(Object o) {
 		console.write(o.toString());
 		console.write("\n");
