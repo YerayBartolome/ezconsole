@@ -2,6 +2,7 @@ package functionalities;
 
 import java.awt.Color;
 import java.awt.event.KeyEvent;
+import java.util.concurrent.Semaphore;
 
 import controller.EZConsoleController;
 import view.EZConsoleView;
@@ -18,8 +19,10 @@ public class EZConsole {
 	private static final int DEFAULTSIZE_Y = 30;
 	private static final String DEFAULT_TITLE = "EZConsole for Java17 by Y. Bartolomé";
 	
-	private EZConsoleView view;
-	private EZConsoleController controller;
+	private volatile EZConsoleView view;
+	private volatile EZConsoleController controller;
+	
+	private Semaphore mutex = new Semaphore(1);
 	
 	/* CONSOLE INSTANCES CREATION */
 	
@@ -49,37 +52,51 @@ public class EZConsole {
 	
 	//Sets the visibility of the cursor
 	public void setCursorVisible(boolean visible) {
+		try {mutex.acquire();} catch (Exception ex) {}
 		this.view.setCursorVisible(visible);
+		mutex.release();
 	}
 	
 	//Allows to set the cursor in a position within bounds
 	public void setCursorPosition (int w, int h) {
+		try {mutex.acquire();} catch (Exception ex) {}
 		this.view.setCursorPosition(w, h);
+		mutex.release();
 	}
 	
 	//Shows or hides the prompt when reading input-
 	public void showPrompt(boolean show) {
+		try {mutex.acquire();} catch (Exception ex) {}
 		this.controller.setShowPrompt(show);
+		mutex.release();
 	}
 	
 	//Allows to set a custom prompt.
 	public void setPrompt(String newPrompt) {
+		try {mutex.acquire();} catch (Exception ex) {}
 		this.controller.setPrompt(newPrompt);
+		mutex.release();
 	}
 	
 	//Sets the cell background color
 	public void setBackgroundColor(Color c) {
+		try {mutex.acquire();} catch (Exception ex) {}
 		view.setBackgroundColor(c);
+		mutex.release();
 	}
 	
 	//Sets the cell character color
 	public void setContentsColor(Color c) {
+		try {mutex.acquire();} catch (Exception ex) {}
 		view.setContentsColor(c);
+		mutex.release();
 	}
 	
 	//Resets the color settings to default
 	public void resetColor () {
+		try {mutex.acquire();} catch (Exception ex) {}
 		view.resetColor();
+		mutex.release();
 	}
 	
 	//Returns the cell height
@@ -96,7 +113,16 @@ public class EZConsole {
 	
 	//Prints the .toString() of the provided object in the console.
 	public void print(Object o) {
+		try {mutex.acquire();} catch (Exception ex) {}
 		this.view.print(o);
+		mutex.release();
+	}
+	
+	//Prints in a specified content color without changing the overall settings.
+	public void print(Object o, Color color) {
+		try {mutex.acquire();} catch (Exception ex) {}
+		this.view.print(o, color);
+		mutex.release();
 	}
 	
 	//Prints a empty line on the console, then a new line "\n".
@@ -106,72 +132,113 @@ public class EZConsole {
 	
 	//Prints the .toString() of the provided object in the console, then a new line "\n".
 	public void println(Object o) {
+		try {mutex.acquire();} catch (Exception ex) {}
 		view.println(o);
+		mutex.release();
+	}
+	
+	public void println(Object o, Color c) {
+		this.print(o, c);
+		this.println();
 	}
 	
 	//Cleanses all the content prompted and returns cursor to [0,0].
 	public void clear() {
+		try {mutex.acquire();} catch (Exception ex) {}
 		controller.clear();
+		mutex.release();
 	}
 	
 	/* INPUT READING */
 	
 	//Checks if there is any key tap in the input buffer.
 	public boolean keyAvailable() {
-		return controller.keyAvailable();
+		try {mutex.acquire();} catch (Exception ex) {}
+		boolean ka = controller.keyAvailable();
+		mutex.release();
+		return ka;
 	}
 	
 	//Resets the current key input buffer.
 	public void clearBuffer() {
+		try {mutex.acquire();} catch (Exception ex) {}
 		this.controller.clearBuffer();
+		mutex.release();
 	}
 	
 	//Reads a single key pressed by the user (blocks execution until input).
 	public KeyEvent readKey() {
-		return this.controller.readKey(false);
+		return this.readKey(false);
 	}
 	//Same as readKey(), but (hide == true) won't show the input character.
 	public KeyEvent readKey(boolean hide) {
-		return this.controller.readKey(hide);
+		try {mutex.acquire();} catch (Exception ex) {}
+		KeyEvent ke = this.controller.readKey(hide);
+		mutex.release();
+		return ke;
 	}
 	
 	//Reads a single character.
 	public char readChar() {
-		return this.controller.readChar();
+		try {mutex.acquire();} catch (Exception ex) {}
+		char c = controller.readChar();
+		mutex.release();
+		return c;
 	}
 	
 	//Reads a string of characters until the user presses [Return].
 	public String readString() {
-		return this.controller.readLine();
+		try {mutex.acquire();} catch (Exception ex) {}
+		String str = controller.readLine();
+		mutex.release();
+		return str;
 	}
 	
 	//Reads an integer value until [Return] is pressed.
 	public int readInt() {
-		return this.controller.readInt();
+		try {mutex.acquire();} catch (Exception ex) {}
+		int i = controller.readInt();
+		mutex.release();
+		return i;
 	}
 	
 	//Reads a short integer value until [Return] is pressed.
-	public long readShort() {
-		return this.controller.readShort();
+	public short readShort() {
+		try {mutex.acquire();} catch (Exception ex) {}
+		short s = controller.readShort();
+		mutex.release();
+		return s;
 	}
 	
 	//Reads a long integer value until [Return] is pressed.
 	public long readLong() {
-		return this.controller.readLong();
+		try {mutex.acquire();} catch (Exception ex) {}
+		long l = controller.readLong();
+		mutex.release();
+		return l;
 	}
 	
 	//Reads a double value until [Return] is pressed.
 	public double readDouble() {
-		return this.controller.readDouble();
+		try {mutex.acquire();} catch (Exception ex) {}
+		double d = this.controller.readDouble();
+		mutex.release();
+		return d;
 	}
 	
 	//Reads a float value until [Return] is pressed.
-	public double readFloat() {
-		return this.controller.readFloat();
+	public float readFloat() {
+		try {mutex.acquire();} catch (Exception ex) {}
+		float f = controller.readFloat();
+		mutex.release();
+		return f;
 	}
 	
 	//Reads a byte value until [Return] is pressed.
 	public byte readByte() {
-		return this.controller.readByte();
+		try {mutex.acquire();} catch (Exception ex) {}
+		byte b = controller.readByte();
+		mutex.release();
+		return b;
 	}
 }

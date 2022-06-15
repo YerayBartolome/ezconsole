@@ -26,7 +26,7 @@ import javax.swing.Timer;
 public class EZConsoleController implements HierarchyListener, KeyListener, ActionListener {
 	public static final Color DEFAULT_FOREGROUND = Color.LIGHT_GRAY;
 	public static final Color DEFAULT_BACKGROUND = Color.BLACK;
-	private static final Font DEFAULT_FONT = new Font("Monospaced", Font.PLAIN, 12);
+	private static final Font DEFAULT_FONT = new Font("Monospaced", Font.PLAIN, 14);
 	private static final int TAB_SPACES = 5;
 	private static final int DEFAULT_FLICKERRATE = 200;
 	private static final boolean DEFAULT_FLICKER_ON = true;
@@ -518,7 +518,7 @@ public class EZConsoleController implements HierarchyListener, KeyListener, Acti
 		return 0;
 	}
 
-	public long readShort() {
+	public short readShort() {
 		String input=null;
 		try {
 			input = this.readLine();
@@ -552,7 +552,7 @@ public class EZConsoleController implements HierarchyListener, KeyListener, Acti
 		return 0;
 	}
 
-	public double readFloat() {
+	public float readFloat() {
 		String input=null;
 		try {
 			input = this.readLine();
