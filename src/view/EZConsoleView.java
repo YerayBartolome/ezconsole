@@ -11,22 +11,21 @@ public class EZConsoleView extends JFrame {
 	private EZConsoleRenderer render;
 	private int columns, rows;
 	
-	public EZConsoleView (int columns, int rows, String title) {
+	public EZConsoleView (int columns, int rows, String title, EZConsoleController controller) {
 		
 	    this.setTitle(title);
 	    
 		this.columns = columns;
 		this.rows = rows;
 		
-		console = new EZConsoleController(columns, rows);
+		console = controller;
 		render = new EZConsoleRenderer(console);
 		
 		console.setRender(render);
 		console.init(columns, rows);
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		
+		this.addKeyListener(controller);
 		this.getContentPane().add(render);
-		//this.getContentPane().add(render);
 		
 		this.setResizable(false);
 		this.pack();

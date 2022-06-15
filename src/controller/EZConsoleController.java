@@ -4,35 +4,40 @@ import model.BufferCell;
 import model.EZConsoleModel;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.EventQueue;
 import java.awt.Font;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.HierarchyEvent;
 import java.awt.event.HierarchyListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.font.FontRenderContext;
 import java.awt.geom.Rectangle2D;
 import java.io.PrintStream;
 import java.util.Arrays;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import javax.swing.JComponent;
+import javax.swing.JOptionPane;
 import javax.swing.Timer;
 
-public class EZConsoleController implements HierarchyListener {
-	private static final long serialVersionUID = 8290082453035451253L;
-	
+public class EZConsoleController implements HierarchyListener, KeyListener, ActionListener {
 	public static final Color DEFAULT_FOREGROUND = Color.LIGHT_GRAY;
 	public static final Color DEFAULT_BACKGROUND = Color.BLACK;
-	private static final Font DEFAULT_FONT = new Font("Monospace", Font.PLAIN, 20);
+	private static final Font DEFAULT_FONT = new Font("Monospaced", Font.PLAIN, 12);
 	private static final int TAB_SPACES = 5;
 	private static final int DEFAULT_FLICKERRATE = 200;
 	private static final boolean DEFAULT_FLICKER_ON = true;
+	private static final String DEFAULT_PROMPT = "> ";
 	
 	private boolean cursorVisible = false;
 	private boolean cursorBlinkOn = false; 
 	private boolean cursorInverted = false;
+	
+	private String prompt;
+	private boolean showPrompt = true;
 	
 	private Timer flickerTimer;
 	
@@ -51,10 +56,16 @@ public class EZConsoleController implements HierarchyListener {
 	private JComponent render;
 	private EZConsoleModel model = new EZConsoleModel();
 	
+	private Queue<Character> inputBuffer;
+	private Queue<KeyEvent> innerBuffer;
+	
 	public EZConsoleController(int columns, int rows) {
 		setMainFont(DEFAULT_FONT);
 		setFont(mainFont);
 		setCursorFlicker(DEFAULT_FLICKER_ON);
+		prompt = DEFAULT_PROMPT;
+		inputBuffer = new ConcurrentLinkedQueue<Character>();
+		innerBuffer = new ConcurrentLinkedQueue<KeyEvent>();
 	}
 	
 	public void setRender(JComponent render) {
@@ -286,6 +297,14 @@ public class EZConsoleController implements HierarchyListener {
 			write(c);
 		}
 	}
+	
+	public void setPrompt(String str) {
+		this.prompt = str;
+	}
+	
+	public void setShowPrompt(boolean show) {
+		this.showPrompt = show;
+	}
 
 	public void fillArea(BufferCell bc, int column, int row, int width, int height) {
 		model.fillArea(bc, column, row, width, height);
@@ -373,6 +392,198 @@ public class EZConsoleController implements HierarchyListener {
 				stopBlinking();
 			}
 		}
+	}
+
+	public boolean keyAvailable() {
+		return !innerBuffer.isEmpty();
+	}
+
+	@Override
+	public void actionPerformed(ActionEvent e) {
+		JOptionPane.showMessageDialog(render, 
+                "EZConsole v1.0 by Y. Bartolomé (2021-2022) \n Contains code from JConsole v1.0c by E. Sesa (2016-17) and Swing Console by M. Anderson found at https://github.com/mikera/swing-console",
+                "About & Credits", JOptionPane.INFORMATION_MESSAGE);
+		
+	}
+
+	@Override
+	public void keyTyped(KeyEvent e) {
+		inputBuffer.add(e.getKeyChar());
+	}
+
+	@Override
+	public void keyPressed(KeyEvent e) {
+		innerBuffer.add(e);		
+	}
+
+	@Override
+	public void keyReleased(KeyEvent e) {
+		//Do nothing
+	}
+
+	public void clearBuffer() {
+		try {
+			EventQueue.invokeAndWait(new Runnable () {public void run () {
+		innerBuffer.clear(); 
+		inputBuffer.clear();
+			}});
+		}
+		catch(Exception e){}
+	}
+
+	public KeyEvent readKey(boolean hide) {
+		if(showPrompt) write(prompt);
+		KeyEvent result = innerBuffer.poll();
+		while (result==null) {
+			result = innerBuffer.poll();
+		}
+		if (!hide && writable(result.getKeyCode())) write(result.getKeyChar());
+		clearBuffer();
+		return result;
+	}
+	
+	private static boolean writable (int keyCode) {
+		return KeyEvent.getKeyText(keyCode).length()==1
+				|| Character.isLetterOrDigit(keyCode);
+	}
+
+	public char readChar() {
+		String input = this.readLine();
+		if (input.length()>0) return input.charAt(0);
+		else return this.readChar();
+	}
+	
+	private char innerReadChar () {
+		Character result = inputBuffer.poll();
+		while (result==null) {
+			result = inputBuffer.poll();
+		}
+		return result.charValue(); 
+	}
+
+	public String readLine() {
+		if(showPrompt) write(prompt);
+		inputBuffer.clear();
+		String result = "";
+		char c = this.innerReadChar();
+		while (c!='\n') {
+			if(c=='\b') {
+				if (result.length()>0 && getCursorX()>0) {
+					doBackspace();
+					result = result.substring(0,result.length()-1);
+				}
+			}
+			else {
+				write(c);
+				result = result+c;
+			}
+			c = this.innerReadChar();
+		}
+		innerBuffer.clear();
+		write(c);
+		return result;
+	}
+
+	public int readInt() {
+		String input=null;
+		try {
+			input = this.readLine();
+			if (input.length()==0) return readInt();
+			return Integer.parseInt(input);
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+			JOptionPane.showMessageDialog(render, 
+					                      "Incorrect input: "+input+". program will terminate", 
+					                       "Incorrect Input", JOptionPane.ERROR_MESSAGE);
+			System.exit(0);
+		}
+		return 0;
+	}
+
+	public long readLong() {
+		String input=null;
+		try {
+			input = this.readLine();
+			if (input.length()==0) return readLong();
+			return Long.parseLong(input);
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+			JOptionPane.showMessageDialog(render, 
+					                      "Incorrect input: "+input+". program will terminate", 
+					                       "Incorrect Input", JOptionPane.ERROR_MESSAGE);
+			System.exit(0);
+		}
+		return 0;
+	}
+
+	public long readShort() {
+		String input=null;
+		try {
+			input = this.readLine();
+			if (input.length()==0) return readShort();
+			return Short.parseShort(input);
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+			JOptionPane.showMessageDialog(render, 
+					                      "Incorrect input: "+input+". program will terminate", 
+					                       "Incorrect Input", JOptionPane.ERROR_MESSAGE);
+			System.exit(0);
+		}
+		return 0;
+	}
+
+	public double readDouble() {
+		String input=null;
+		try {
+			input = this.readLine();
+			if (input.length()==0) return readDouble();
+			return Double.parseDouble(input);
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+			JOptionPane.showMessageDialog(render, 
+					                      "Incorrect input: "+input+". program will terminate", 
+					                       "Incorrect Input", JOptionPane.ERROR_MESSAGE);
+			System.exit(0);
+		}
+		return 0;
+	}
+
+	public double readFloat() {
+		String input=null;
+		try {
+			input = this.readLine();
+			if (input.length()==0) return readFloat();
+			return Float.parseFloat(input);
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+			JOptionPane.showMessageDialog(render, 
+					                      "Incorrect input: "+input+". program will terminate", 
+					                       "Incorrect Input", JOptionPane.ERROR_MESSAGE);
+			System.exit(0);
+		}
+		return 0;
+	}
+
+	public byte readByte() {
+		String input=null;
+		try {
+			input = this.readLine();
+			if (input.length()==0) return readByte();
+			return Byte.parseByte(input);
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+			JOptionPane.showMessageDialog(render, 
+					                      "Incorrect input: "+input+". program will terminate", 
+					                       "Incorrect Input", JOptionPane.ERROR_MESSAGE);
+			System.exit(0);
+		}
+		return 0;
 	}
 	
 
