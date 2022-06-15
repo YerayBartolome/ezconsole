@@ -8,38 +8,57 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.HierarchyEvent;
+import java.awt.event.HierarchyListener;
 import java.awt.font.FontRenderContext;
 import java.awt.geom.Rectangle2D;
 import java.io.PrintStream;
 import java.util.Arrays;
 
 import javax.swing.JComponent;
+import javax.swing.Timer;
 
-public class EZConsoleController extends JComponent {
+public class EZConsoleController implements HierarchyListener {
 	private static final long serialVersionUID = 8290082453035451253L;
 	
 	public static final Color DEFAULT_FOREGROUND = Color.LIGHT_GRAY;
 	public static final Color DEFAULT_BACKGROUND = Color.BLACK;
 	private static final Font DEFAULT_FONT = new Font("Monospace", Font.PLAIN, 20);
 	private static final int TAB_SPACES = 5;
- 
-	private EZConsoleModel model = new EZConsoleModel();
+	private static final int DEFAULT_FLICKERRATE = 200;
+	private static final boolean DEFAULT_FLICKER_ON = true;
+	
+	private boolean cursorVisible = false;
+	private boolean cursorBlinkOn = false; 
+	private boolean cursorInverted = false;
+	
+	private Timer flickerTimer;
+	
+	private int cursorX = 0;
+	private int cursorY = 0;
 
 	private int fontWidth;
 	private int fontHeight;
 	private int fontYOffset;
 
-	private int cursorX = 0;
-	private int cursorY = 0;
 	private Font mainFont = null;
 	private Font currentFont = null;
 	private Color currentForeground = DEFAULT_FOREGROUND;
 	private Color currentBackground = DEFAULT_BACKGROUND;
 	
+	private JComponent render;
+	private EZConsoleModel model = new EZConsoleModel();
+	
 	public EZConsoleController(int columns, int rows) {
 		setMainFont(DEFAULT_FONT);
 		setFont(mainFont);
-		init(columns, rows);
+		setCursorFlicker(DEFAULT_FLICKER_ON);
+	}
+	
+	public void setRender(JComponent render) {
+		this.render = render;
 	}
 
 	public void setMainFont(Font font) {
@@ -52,10 +71,6 @@ public class EZConsoleController extends JComponent {
 		fontWidth = (int) charBounds.getWidth();
 		fontHeight = (int) charBounds.getHeight();
 		fontYOffset = -(int) charBounds.getMinY();
-		
-		setPreferredSize(new Dimension(model.columns * fontWidth, model.rows * fontHeight));
-
-		repaint();
 	}
 
 	public void setRows(int rows) {
@@ -88,21 +103,21 @@ public class EZConsoleController extends JComponent {
 
 	public void repaintArea(int column, int row, int width, int height) {
 		
-		if (column==this.cursorX && row==this.cursorY && width==1 && height==1) {
+		if (column==this.cursorX && row==this.cursorY && width==1 && height==1 && this.cursorVisible==false) {
 			return;
 		}
 		
 		int fw = getFontWidth();
 		int fh = getFontHeight();
-		repaint(column * fw, row * fh, width * fw, height * fh);
+		render.repaint(column * fw, row * fh, width * fw, height * fh);
 	}
 
-	protected void init(int columns, int rows) {
+	public void init(int columns, int rows) {
 		model.init(columns, rows);
 		BufferCell bc = new BufferCell(' ', DEFAULT_BACKGROUND, DEFAULT_FOREGROUND, DEFAULT_FONT);
 		Arrays.fill(this.model.bufferContents, bc);
 
-		setPreferredSize(new Dimension(columns * fontWidth, rows * fontHeight));
+		render.setPreferredSize(new Dimension(columns * fontWidth, rows * fontHeight));
 	}
 
 	public void resize(int columns, int rows) {
@@ -131,56 +146,7 @@ public class EZConsoleController extends JComponent {
 		repaintArea(0, 0, width, height);
 	}
 
-	@Override
-	public void paintComponent(Graphics graphics) {
-		Graphics2D g = (Graphics2D) graphics;
-		Rectangle r = g.getClipBounds();
-
-		int x1 = (int) (r.getMinX() / fontWidth);
-		int x2 = (int) (r.getMaxX() / fontWidth) + 1;
-		int y1 = (int) (r.getMinY() / fontWidth);
-		int y2 = (int) (r.getMaxY() / fontWidth) + 1;
-
-		int curX = getCursorX();
-		int curY = getCursorY();
-
-		for (int j = Math.max(0, y1); j < Math.min(y2, model.rows); j++) {
-			int offset = j * model.columns;
-			int start = Math.max(x1, 0);
-			int end = Math.min(x2, model.columns);
-
-			while (start < end) {
-				
-				Color nfg = model.getContentColorAt(offset+start);
-				Color nbg = model.getBackgroundAt(offset+start);
-				Font nf = model.getFontAt(offset+start);
-
-				int i = start + 1;
-				
-				while ((i < end) && (!((j == curY) && (i == curX)))
-						&& (nfg == model.getContentColorAt(offset+i))
-						&& (nbg == model.getBackgroundAt(offset+i))
-						&& (nf == model.getFontAt(offset+i))) {
-					i++;
-				}
-
-				g.setFont(nf);
-
-				g.setBackground(nbg);
-				g.clearRect(fontWidth * start, j * fontHeight, fontWidth
-						* (i - start), fontHeight);
-
-				g.setColor(nfg);
-				for (int k=start; k<i; k++) {
-					g.drawChars(model.bufferContentsToCharArray(), offset + k, 1, 
-							k* fontWidth, 
-							j * fontHeight + fontYOffset);
-				}
-				start = i;
-			
-			}
-		}
-	}
+	
 
 	public void setCursorPos(int column, int row) {
 		if ((column < 0) || (column >= model.columns))
@@ -218,15 +184,27 @@ public class EZConsoleController extends JComponent {
 	public char getCharAt(int column, int row) {
 		return model.getBCAt(column, row).getContent();
 	}
+	
+	public Color getForegroundAt(int offset) {
+		return model.getContentColorAt(offset);
+	}
 
 	public Color getForegroundAt(int column, int row) {
 		return model.getContentColorAt(column, row);
 	}
 
+	public Color getBackgroundAt(int offset) {
+		return model.getBackgroundAt(offset);
+	}
+	
 	public Color getBackgroundAt(int column, int row) {
 		return model.getBackgroundAt(column, row);
 	}
 
+	public Font getFontAt(int offset) {
+		return model.getFontAt(offset);
+	}
+	
 	public Font getFontAt(int column, int row) {
 		return model.getFontAt(column, row);
 	}
@@ -260,7 +238,7 @@ public class EZConsoleController extends JComponent {
 		model.setContentsAt(cursorX-1, cursorY, new BufferCell(' ', currentForeground,
 				this.DEFAULT_BACKGROUND, currentFont));
 		cursorX--;
-		this.repaint();
+		render.repaint();
 	}
 	
 	private void moveCursor(BufferCell bc) {
@@ -283,7 +261,7 @@ public class EZConsoleController extends JComponent {
 			model.pushUp(properties);
 			cursorY--;
 		}
-		this.repaint();
+		render.repaint();
 			
 	}
 
@@ -313,6 +291,90 @@ public class EZConsoleController extends JComponent {
 		model.fillArea(bc, column, row, width, height);
 		repaintArea(column, row, width, height);
 	}
+
+	public void setCursorVisible(boolean visible) {
+		this.cursorVisible = visible;		
+	}
+
+	public char[] bufferContentsToCharArray() {
+		return model.bufferContentsToCharArray();
+	}
+
+	public int getFontYOffset() {
+		return this.fontYOffset;
+	}
+
+	public boolean getCursorVisible() {
+		return this.cursorVisible;
+	}
+
+	public boolean getCursorBlinkOn() {
+		return this.cursorBlinkOn;
+	}
+
+	public boolean getCursorInverted() {
+		return this.cursorInverted;
+	}
+	
+	private void stopBlinking() {
+		if (flickerTimer != null) {
+			flickerTimer.stop();
+			cursorInverted = true;
+		}
+	}
+
+	private void startBlinking() {
+		getTimer().start();
+	}
+
+	public void setCursorFlicker(boolean blink) {
+		if (blink) {
+			cursorBlinkOn = true;
+			startBlinking();
+		} else {
+			cursorBlinkOn = false;
+			stopBlinking();
+		}
+	}
+
+	public void setBlinkDelay(int millis) {
+		getTimer().setDelay(millis);
+	}
+
+	private Timer getTimer() {
+		if (flickerTimer == null) {
+			flickerTimer = new Timer(DEFAULT_FLICKERRATE, new TimerAction());
+			flickerTimer.setRepeats(true);
+			if (cursorBlinkOn) {
+				startBlinking();
+			}
+		}
+		return flickerTimer;
+	}
+	
+	private class TimerAction implements ActionListener {
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			if (cursorBlinkOn && render.isShowing()) {
+				cursorInverted = !cursorInverted;
+				repaintArea(getCursorX(), getCursorY(), 1, 1);
+			} else {
+				stopBlinking();
+			}
+		}
+	}
+
+	@Override
+	public void hierarchyChanged(HierarchyEvent e) {
+		if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0) {
+			if (render.isShowing()) {
+				startBlinking();
+			} else {
+				stopBlinking();
+			}
+		}
+	}
+	
 
 }
 

@@ -8,6 +8,7 @@ public class EZConsoleView extends JFrame {
 	private static final long serialVersionUID = 8759638563543914280L;
 	
 	private EZConsoleController console;
+	private EZConsoleRenderer render;
 	private int columns, rows;
 	
 	public EZConsoleView (int columns, int rows, String title) {
@@ -18,10 +19,14 @@ public class EZConsoleView extends JFrame {
 		this.rows = rows;
 		
 		console = new EZConsoleController(columns, rows);
+		render = new EZConsoleRenderer(console);
 		
+		console.setRender(render);
+		console.init(columns, rows);
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		
-		this.getContentPane().add(console);
+		this.getContentPane().add(render);
+		//this.getContentPane().add(render);
 		
 		this.setResizable(false);
 		this.pack();
@@ -77,6 +82,11 @@ public class EZConsoleView extends JFrame {
 	
 	public int getColumns() {
 		return this.columns;
+	}
+
+	public void setCursorVisible(boolean visible) {
+		this.console.setCursorVisible(visible);
+		
 	}
 	
 }

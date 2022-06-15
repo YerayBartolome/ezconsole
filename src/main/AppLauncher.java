@@ -8,7 +8,9 @@ public class AppLauncher {
 
 	public static void main(String[] args) {
 		
-		EZConsole console = new EZConsole(60, 20);
+		EZConsole console = new EZConsole(60, 25, "EZConsole features DEMO");
+		
+		console.setCursorVisible(true);
 		
 		console.print("Is this content?");
 		console.print(' ');
@@ -26,7 +28,7 @@ public class AppLauncher {
 		
 		console.setContentsColor(Color.RED);
 		
-		console.println("Is this content?");
+		console.print("Is this content?");
 	}
 
 }
