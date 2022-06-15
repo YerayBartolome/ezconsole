@@ -40,7 +40,8 @@ public class EZConsole {
 	
 	//Creates the console provided all three values
 	public EZConsole (int x, int y, String title) {
-		this.view = new EZConsoleView(x, y, title);
+		this.controller = new EZConsoleController(x, y);
+		this.view = new EZConsoleView(x, y, title, controller);
 		System.out.println("Launching " + title + " in a new Window...");
 	}
 	
@@ -54,6 +55,16 @@ public class EZConsole {
 	//Allows to set the cursor in a position within bounds
 	public void setCursorPosition (int w, int h) {
 		this.view.setCursorPosition(w, h);
+	}
+	
+	//Shows or hides the prompt when reading input-
+	public void showPrompt(boolean show) {
+		this.controller.setShowPrompt(show);
+	}
+	
+	//Allows to set a custom prompt.
+	public void setPrompt(String newPrompt) {
+		this.controller.setPrompt(newPrompt);
 	}
 	
 	//Sets the cell background color
@@ -103,7 +114,7 @@ public class EZConsole {
 		controller.clear();
 	}
 	
-	/* INPUT READING 
+	/* INPUT READING */
 	
 	//Checks if there is any key tap in the input buffer.
 	public boolean keyAvailable() {
@@ -162,5 +173,5 @@ public class EZConsole {
 	//Reads a byte value until [Return] is pressed.
 	public byte readByte() {
 		return this.controller.readByte();
-	}*/
+	}
 }
